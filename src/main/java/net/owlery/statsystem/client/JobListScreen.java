@@ -43,25 +43,14 @@ public class JobListScreen extends Screen {
             return true;
         }
 
-        // Sort jobs: unlocked first, then locked
-        Player player = this.minecraft.player;
-        var cap = player != null ? PlayerStatCapabilityProvider.get(player).orElse(null) : null;
-        String[] sortedJobs = ModJobs.JOBS.clone();
-        if (cap != null) {
-            java.util.Arrays.sort(sortedJobs, (a, b) -> {
-                boolean aUnlocked = cap.getUnlockedJobs().contains(a);
-                boolean bUnlocked = cap.getUnlockedJobs().contains(b);
-                if (aUnlocked == bUnlocked) return a.compareTo(b);
-                return aUnlocked ? -1 : 1;
-            });
-        }
-
         // Handle left-clicking on a job
         if (button == 0) { // Left click
             int jobIndex = (int) ((mouseY - (y + 24)) / 18);
-            if (jobIndex >= 0 && jobIndex < sortedJobs.length) {
+            if (jobIndex >= 0 && jobIndex < ModJobs.JOBS.length) {
+                Player player = this.minecraft.player;
+                var cap = player != null ? PlayerStatCapabilityProvider.get(player).orElse(null) : null;
                 if (cap != null) {
-                    String job = sortedJobs[jobIndex];
+                    String job = ModJobs.JOBS[jobIndex];
                     if (cap.getUnlockedJobs().contains(job)) {
                         // Send packet to server to equip job
                         StatSystemMod.NETWORK.sendToServer(new EquipJobTitlePacket("job", job));
@@ -90,19 +79,8 @@ public class JobListScreen extends Screen {
         // Reset hover state
         hoveredJobIndex = -1;
         
-        // Sort jobs: unlocked first, then locked
-        String[] sortedJobs = ModJobs.JOBS.clone();
-        if (cap != null) {
-            java.util.Arrays.sort(sortedJobs, (a, b) -> {
-                boolean aUnlocked = cap.getUnlockedJobs().contains(a);
-                boolean bUnlocked = cap.getUnlockedJobs().contains(b);
-                if (aUnlocked == bUnlocked) return a.compareTo(b);
-                return aUnlocked ? -1 : 1;
-            });
-        }
-        
-        for (int i = 0; i < sortedJobs.length; i++) {
-            String job = sortedJobs[i];
+        for (int i = 0; i < ModJobs.JOBS.length; i++) {
+            String job = ModJobs.JOBS[i];
             boolean unlocked = cap != null && cap.getUnlockedJobs().contains(job);
             boolean selected = cap != null && job.equals(cap.getEquippedJob());
             
@@ -135,7 +113,7 @@ public class JobListScreen extends Screen {
         
         // Show tooltip for hovered job
         if (hoveredJobIndex != -1 && cap != null) {
-            String job = sortedJobs[hoveredJobIndex];
+            String job = ModJobs.JOBS[hoveredJobIndex];
             boolean unlocked = cap.getUnlockedJobs().contains(job);
             String tooltip = unlocked ? "Left-click to equip" : "Locked";
             guiGraphics.renderTooltip(this.font, Component.literal(tooltip), mouseX, mouseY);

@@ -20,6 +20,15 @@ import net.minecraftforge.network.NetworkRegistry;
 import net.minecraftforge.network.simple.SimpleChannel;
 import net.owlery.statsystem.capability.PlayerStatSyncPacket;
 import net.owlery.statsystem.capability.EquipJobTitlePacket;
+import net.owlery.statsystem.capability.UpgradeStatPacket;
+import net.owlery.statsystem.capability.BuyPointPacket;
+import net.minecraftforge.event.village.VillagerTradesEvent;
+import net.minecraftforge.event.entity.player.PlayerEvent;
+import net.minecraft.world.entity.npc.Villager;
+import net.minecraft.world.item.trading.MerchantOffer;
+import net.minecraft.world.item.trading.MerchantOffers;
+import net.minecraft.world.entity.player.Player;
+import net.owlery.statsystem.capability.PlayerStatCapabilityProvider;
 
 // The value here should match an entry in the META-INF/mods.toml file
 @Mod(StatSystemMod.MOD_ID)
@@ -72,6 +81,20 @@ public class StatSystemMod{
             EquipJobTitlePacket.class,
             EquipJobTitlePacket::toBytes,
             EquipJobTitlePacket::new,
+            (msg, ctx) -> { msg.handle(ctx); }
+        );
+        NETWORK.registerMessage(
+            id++,
+            UpgradeStatPacket.class,
+            UpgradeStatPacket::toBytes,
+            UpgradeStatPacket::new,
+            (msg, ctx) -> { msg.handle(ctx); }
+        );
+        NETWORK.registerMessage(
+            id++,
+            BuyPointPacket.class,
+            BuyPointPacket::toBytes,
+            BuyPointPacket::new,
             (msg, ctx) -> { msg.handle(ctx); }
         );
     }

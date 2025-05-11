@@ -17,14 +17,24 @@ public class PlayerStatSyncPacket {
     private final String equippedJob;
     private final int usedPoints;
     private final int availablePoints;
+    private final int pointsPurchased;
+    private final int healthStat;
+    private final int strengthStat;
+    private final int agilityStat;
+    private final int charismaStat;
 
-    public PlayerStatSyncPacket(Set<String> unlockedTitles, Set<String> unlockedJobs, String equippedTitle, String equippedJob, int usedPoints, int availablePoints) {
+    public PlayerStatSyncPacket(Set<String> unlockedTitles, Set<String> unlockedJobs, String equippedTitle, String equippedJob, int usedPoints, int availablePoints, int pointsPurchased, int healthStat, int strengthStat, int agilityStat, int charismaStat) {
         this.unlockedTitles = unlockedTitles;
         this.unlockedJobs = unlockedJobs;
         this.equippedTitle = equippedTitle;
         this.equippedJob = equippedJob;
         this.usedPoints = usedPoints;
         this.availablePoints = availablePoints;
+        this.pointsPurchased = pointsPurchased;
+        this.healthStat = healthStat;
+        this.strengthStat = strengthStat;
+        this.agilityStat = agilityStat;
+        this.charismaStat = charismaStat;
     }
 
     public PlayerStatSyncPacket(FriendlyByteBuf buf) {
@@ -38,6 +48,11 @@ public class PlayerStatSyncPacket {
         this.equippedJob = buf.readUtf();
         this.usedPoints = buf.readVarInt();
         this.availablePoints = buf.readVarInt();
+        this.pointsPurchased = buf.readVarInt();
+        this.healthStat = buf.readVarInt();
+        this.strengthStat = buf.readVarInt();
+        this.agilityStat = buf.readVarInt();
+        this.charismaStat = buf.readVarInt();
     }
 
     public void toBytes(FriendlyByteBuf buf) {
@@ -49,6 +64,11 @@ public class PlayerStatSyncPacket {
         buf.writeUtf(equippedJob);
         buf.writeVarInt(usedPoints);
         buf.writeVarInt(availablePoints);
+        buf.writeVarInt(pointsPurchased);
+        buf.writeVarInt(healthStat);
+        buf.writeVarInt(strengthStat);
+        buf.writeVarInt(agilityStat);
+        buf.writeVarInt(charismaStat);
     }
 
     public void handle(Supplier<NetworkEvent.Context> ctx) {
@@ -64,6 +84,11 @@ public class PlayerStatSyncPacket {
                     cap.equipJob(equippedJob);
                     cap.setUsedPoints(usedPoints);
                     cap.setAvailablePoints(availablePoints);
+                    cap.setPointsPurchased(pointsPurchased);
+                    cap.setHealthStat(healthStat);
+                    cap.setStrengthStat(strengthStat);
+                    cap.setAgilityStat(agilityStat);
+                    cap.setCharismaStat(charismaStat);
                 });
             }
         });

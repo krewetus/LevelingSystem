@@ -86,7 +86,12 @@ public class PlayerStatCapabilityProvider implements ICapabilityProvider, ICapab
                         cap.getEquippedTitle(),
                         cap.getEquippedJob(),
                         cap.getUsedPoints(),
-                        cap.getAvailablePoints()
+                        cap.getAvailablePoints(),
+                        cap.getPointsPurchased(),
+                        cap.getHealthStat(),
+                        cap.getStrengthStat(),
+                        cap.getAgilityStat(),
+                        cap.getCharismaStat()
                     ),
                     ((net.minecraft.server.level.ServerPlayer) player).connection.connection,
                     NetworkDirection.PLAY_TO_CLIENT
@@ -98,6 +103,17 @@ public class PlayerStatCapabilityProvider implements ICapabilityProvider, ICapab
         public static void onPlayerRespawn(PlayerEvent.PlayerRespawnEvent event) {
             Player player = event.getEntity();
             player.getCapability(PLAYER_STAT_CAPABILITY).ifPresent(cap -> {
+                // Reapply attributes based on stats
+                player.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH)
+                    .setBaseValue(20.0 + (cap.getHealthStat() * 1.0));
+                player.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE)
+                    .setBaseValue(1.0 + (cap.getStrengthStat() * 0.2));
+                player.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MOVEMENT_SPEED)
+                    .setBaseValue(0.1 + (cap.getAgilityStat() - 1) * (0.1 / 99.0));
+                // Optionally, heal to max if needed
+                if (player.getHealth() > player.getMaxHealth()) {
+                    player.setHealth(player.getMaxHealth());
+                }
                 StatSystemMod.NETWORK.sendTo(
                     new PlayerStatSyncPacket(
                         cap.getUnlockedTitles(),
@@ -105,7 +121,12 @@ public class PlayerStatCapabilityProvider implements ICapabilityProvider, ICapab
                         cap.getEquippedTitle(),
                         cap.getEquippedJob(),
                         cap.getUsedPoints(),
-                        cap.getAvailablePoints()
+                        cap.getAvailablePoints(),
+                        cap.getPointsPurchased(),
+                        cap.getHealthStat(),
+                        cap.getStrengthStat(),
+                        cap.getAgilityStat(),
+                        cap.getCharismaStat()
                     ),
                     ((net.minecraft.server.level.ServerPlayer) player).connection.connection,
                     NetworkDirection.PLAY_TO_CLIENT

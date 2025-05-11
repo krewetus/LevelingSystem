@@ -2,9 +2,12 @@ package net.owlery.statsystem;
 
 public class ModJobs {
     public static final String[] JOBS = {
-        "Jobless",
+        "None",
         "Hunter",
         "Trader",
-        "Bitchass"
+        "Bitchass",
+        "Entertainer",
+        "Farmer",
+        "Homeless"
     };
 } 
