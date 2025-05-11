@@ -13,6 +13,7 @@ import net.owlery.statsystem.client.TitleListScreen;
 import net.owlery.statsystem.ModTitles;
 import net.owlery.statsystem.ModJobs;
 import net.minecraft.world.entity.player.Player;
+import net.owlery.statsystem.capability.PlayerStatCapabilityProvider;
 
 public class StatsMenuScreen extends Screen {
     private static final ResourceLocation TEXTURE = ResourceLocation.of(StatSystemMod.MOD_ID + ":textures/gui/stats_menu.png", ':');
@@ -42,6 +43,8 @@ public class StatsMenuScreen extends Screen {
     private boolean showTitleTooltip = false;
     private int titleLabelX1, titleLabelX2, titleLabelY1, titleLabelY2;
     private static final int TOOLTIP_DELAY_MS = 500;
+    private int jobValueX1, jobValueX2, jobValueY1, jobValueY2;
+    private int titleValueX1, titleValueX2, titleValueY1, titleValueY2;
 
     public StatsMenuScreen() {
         super(Component.empty());
@@ -70,11 +73,11 @@ public class StatsMenuScreen extends Screen {
 
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        if (button == 0 && isInJobLabel((int)mouseX, (int)mouseY)) {
+        if (button == 0 && isInJobValue((int)mouseX, (int)mouseY)) {
             Minecraft.getInstance().setScreen(new JobListScreen(this));
             return true;
         }
-        if (button == 0 && isInTitleLabel((int)mouseX, (int)mouseY)) {
+        if (button == 0 && isInTitleValue((int)mouseX, (int)mouseY)) {
             Minecraft.getInstance().setScreen(new TitleListScreen(this));
             return true;
         }
@@ -86,6 +89,12 @@ public class StatsMenuScreen extends Screen {
     }
     private boolean isInTitleLabel(int mouseX, int mouseY) {
         return mouseX >= titleLabelX1 && mouseX <= titleLabelX2 && mouseY >= titleLabelY1 && mouseY <= titleLabelY2;
+    }
+    private boolean isInJobValue(int mouseX, int mouseY) {
+        return mouseX >= jobValueX1 && mouseX <= jobValueX2 && mouseY >= jobValueY1 && mouseY <= jobValueY2;
+    }
+    private boolean isInTitleValue(int mouseX, int mouseY) {
+        return mouseX >= titleValueX1 && mouseX <= titleValueX2 && mouseY >= titleValueY1 && mouseY <= titleValueY2;
     }
 
     @Override
@@ -138,10 +147,10 @@ public class StatsMenuScreen extends Screen {
                 int levelValueX = levelLabelX + this.font.width(levelLabel) + 4;
                 // Draw label
                 guiGraphics.drawString(this.font, Component.literal(levelLabel), levelLabelX, levelLabelY, 0xFFFFFF | (alpha << 24));
-                // Draw big level number
+                // Draw even bigger level number
                 guiGraphics.pose().pushPose();
-                guiGraphics.pose().translate(levelValueX, levelLabelY - 2, 0);
-                guiGraphics.pose().scale(1.5f, 1.5f, 1.0f);
+                guiGraphics.pose().translate(levelValueX, levelLabelY - 6, 0);
+                guiGraphics.pose().scale(2.2f, 2.2f, 1.0f);
                 guiGraphics.drawString(this.font, Component.literal(levelValue), 0, 0, 0xFFFFFF | (alpha << 24));
                 guiGraphics.pose().popPose();
                 // XP (below level, right-aligned, lime green)
@@ -156,14 +165,24 @@ public class StatsMenuScreen extends Screen {
             }
             // Title label and value
             String titleLabel = "TITLE: ";
-            String titleName = ModTitles.TITLES[DEFAULT_TITLE_INDEX];
+            var cap = player != null ? PlayerStatCapabilityProvider.get(player).orElse(null) : null;
+            String titleName = cap != null ? cap.getEquippedTitle() : "Noob";
             int titleLabelX = x + 20;
             int titleLabelY = titleY;
             int titleLabelWidth = this.font.width(titleLabel);
             Integer titleColor = getTitleColor(titleName);
             if (titleColor == null) titleColor = 0xFFFFFF;
             guiGraphics.drawString(this.font, Component.literal(titleLabel).plainCopy().withStyle(s -> s.withColor(0xFFFFFF)), titleLabelX, titleLabelY, 0xFFFFFF | (alpha << 24));
-            guiGraphics.drawString(this.font, Component.literal(titleName.toUpperCase()), titleLabelX + titleLabelWidth, titleLabelY, titleColor | (alpha << 24));
+            // Underline if hovered
+            boolean titleHovered = mouseX >= titleLabelX + titleLabelWidth && mouseX <= titleLabelX + titleLabelWidth + this.font.width(titleName.toUpperCase()) && mouseY >= titleLabelY && mouseY <= titleLabelY + this.font.lineHeight;
+            Component titleComponent = Component.literal(titleName.toUpperCase());
+            if (titleHovered) titleComponent = titleComponent.copy().withStyle(s -> s.withUnderlined(true));
+            guiGraphics.drawString(this.font, titleComponent, titleLabelX + titleLabelWidth, titleLabelY, titleColor | (alpha << 24));
+            // Save value area for hover/click
+            titleValueX1 = titleLabelX + titleLabelWidth;
+            titleValueX2 = titleLabelX + titleLabelWidth + this.font.width(titleName.toUpperCase());
+            titleValueY1 = titleLabelY;
+            titleValueY2 = titleLabelY + this.font.lineHeight;
             // Save label area for hover/click
             titleLabelX1 = titleLabelX;
             titleLabelX2 = titleLabelX + titleLabelWidth;
@@ -171,14 +190,24 @@ public class StatsMenuScreen extends Screen {
             titleLabelY2 = titleLabelY + this.font.lineHeight;
             // Job label and value
             String jobLabel = "JOB: ";
-            String jobName = ModJobs.JOBS[DEFAULT_JOB_INDEX];
+            String jobName = cap != null ? cap.getEquippedJob() : "Jobless";
             Integer jobColor = getJobColor(jobName);
             if (jobColor == null) jobColor = 0xFFFFFF;
             int jobLabelX = x + 20;
             int jobLabelY = jobY;
             int jobLabelWidth = this.font.width(jobLabel);
             guiGraphics.drawString(this.font, Component.literal(jobLabel).plainCopy().withStyle(s -> s.withColor(0xFFFFFF)), jobLabelX, jobLabelY, 0xFFFFFF | (alpha << 24));
-            guiGraphics.drawString(this.font, Component.literal(jobName.toUpperCase()), jobLabelX + jobLabelWidth, jobLabelY, jobColor | (alpha << 24));
+            // Underline if hovered
+            boolean jobHovered = mouseX >= jobLabelX + jobLabelWidth && mouseX <= jobLabelX + jobLabelWidth + this.font.width(jobName.toUpperCase()) && mouseY >= jobLabelY && mouseY <= jobLabelY + this.font.lineHeight;
+            Component jobComponent = Component.literal(jobName.toUpperCase());
+            if (jobHovered) jobComponent = jobComponent.copy().withStyle(s -> s.withUnderlined(true));
+            guiGraphics.drawString(this.font, jobComponent, jobLabelX + jobLabelWidth, jobLabelY, jobColor | (alpha << 24));
+            // Save value area for hover/click
+            jobValueX1 = jobLabelX + jobLabelWidth;
+            jobValueX2 = jobLabelX + jobLabelWidth + this.font.width(jobName.toUpperCase());
+            jobValueY1 = jobLabelY;
+            jobValueY2 = jobLabelY + this.font.lineHeight;
+            // Save label area for hover/click
             jobLabelX1 = jobLabelX;
             jobLabelX2 = jobLabelX + jobLabelWidth;
             jobLabelY1 = jobLabelY;
@@ -237,7 +266,7 @@ public class StatsMenuScreen extends Screen {
                 guiGraphics.fill(lineX, lineY, lineX + lineWidth, lineY + 3, 0xFFFFFFFF);
             }
             // Tooltip logic for job
-            if (isInJobLabel(mouseX, mouseY)) {
+            if (isInJobValue(mouseX, mouseY)) {
                 if (jobLabelHoverStart == -1) jobLabelHoverStart = System.currentTimeMillis();
                 else if (System.currentTimeMillis() - jobLabelHoverStart > TOOLTIP_DELAY_MS) showJobTooltip = true;
             } else {
@@ -248,7 +277,7 @@ public class StatsMenuScreen extends Screen {
                 guiGraphics.renderTooltip(this.font, Component.literal("Click me to see all possible jobs"), mouseX, mouseY + 12);
             }
             // Tooltip logic for title
-            if (isInTitleLabel(mouseX, mouseY)) {
+            if (isInTitleValue(mouseX, mouseY)) {
                 if (titleLabelHoverStart == -1) titleLabelHoverStart = System.currentTimeMillis();
                 else if (System.currentTimeMillis() - titleLabelHoverStart > TOOLTIP_DELAY_MS) showTitleTooltip = true;
             } else {
@@ -257,6 +286,16 @@ public class StatsMenuScreen extends Screen {
             }
             if (showTitleTooltip) {
                 guiGraphics.renderTooltip(this.font, Component.literal("Click me to see all possible titles"), mouseX, mouseY + 12);
+            }
+            // Draw points fields at the bottom
+            int pointsY = y + currentHeight - 40;
+            if (cap != null) {
+                String usedPointsLabel = "Used points: " + cap.getUsedPoints();
+                String availablePointsLabel = "Points available: " + cap.getAvailablePoints();
+                int usedPointsX = x + 20;
+                int availablePointsX = x + 20;
+                guiGraphics.drawString(this.font, Component.literal(usedPointsLabel), usedPointsX, pointsY, 0x888888 | (alpha << 24));
+                guiGraphics.drawString(this.font, Component.literal(availablePointsLabel), availablePointsX, pointsY + 16, 0xFFFFFF | (alpha << 24));
             }
         }
         super.render(guiGraphics, mouseX, mouseY, partialTick);

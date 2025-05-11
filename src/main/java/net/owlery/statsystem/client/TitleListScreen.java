@@ -7,6 +7,8 @@ import net.minecraft.resources.ResourceLocation;
 import net.owlery.statsystem.ModTitles;
 import net.minecraft.world.entity.player.Player;
 import net.owlery.statsystem.capability.PlayerStatCapabilityProvider;
+import net.owlery.statsystem.capability.EquipJobTitlePacket;
+import net.owlery.statsystem.StatSystemMod;
 
 public class TitleListScreen extends Screen {
     private static final ResourceLocation DEFAULT_GUI_TEXTURE = new ResourceLocation("minecraft", "textures/gui/demo_background.png");
@@ -41,16 +43,28 @@ public class TitleListScreen extends Screen {
             return true;
         }
 
+        // Sort titles: unlocked first, then locked
+        Player player = this.minecraft.player;
+        var cap = player != null ? PlayerStatCapabilityProvider.get(player).orElse(null) : null;
+        String[] sortedTitles = ModTitles.TITLES.clone();
+        if (cap != null) {
+            java.util.Arrays.sort(sortedTitles, (a, b) -> {
+                boolean aUnlocked = cap.getUnlockedTitles().contains(a);
+                boolean bUnlocked = cap.getUnlockedTitles().contains(b);
+                if (aUnlocked == bUnlocked) return a.compareTo(b);
+                return aUnlocked ? -1 : 1;
+            });
+        }
+
         // Handle left-clicking on a title
         if (button == 0) { // left click
             int titleIndex = (int) ((mouseY - (y + 24)) / 18);
-            if (titleIndex >= 0 && titleIndex < ModTitles.TITLES.length) {
-                Player player = this.minecraft.player;
-                var cap = player != null ? PlayerStatCapabilityProvider.get(player).orElse(null) : null;
+            if (titleIndex >= 0 && titleIndex < sortedTitles.length) {
                 if (cap != null) {
-                    String title = ModTitles.TITLES[titleIndex];
+                    String title = sortedTitles[titleIndex];
                     if (cap.getUnlockedTitles().contains(title)) {
-                        cap.equipTitle(title);
+                        // Send packet to server to equip title
+                        StatSystemMod.NETWORK.sendToServer(new EquipJobTitlePacket("title", title));
                     }
                 }
                 return true;
@@ -76,8 +90,19 @@ public class TitleListScreen extends Screen {
         // Reset hover state
         hoveredTitleIndex = -1;
         
-        for (int i = 0; i < ModTitles.TITLES.length; i++) {
-            String title = ModTitles.TITLES[i];
+        // Sort titles: unlocked first, then locked
+        String[] sortedTitles = ModTitles.TITLES.clone();
+        if (cap != null) {
+            java.util.Arrays.sort(sortedTitles, (a, b) -> {
+                boolean aUnlocked = cap.getUnlockedTitles().contains(a);
+                boolean bUnlocked = cap.getUnlockedTitles().contains(b);
+                if (aUnlocked == bUnlocked) return a.compareTo(b);
+                return aUnlocked ? -1 : 1;
+            });
+        }
+        
+        for (int i = 0; i < sortedTitles.length; i++) {
+            String title = sortedTitles[i];
             boolean unlocked = cap != null && cap.getUnlockedTitles().contains(title);
             boolean selected = cap != null && title.equals(cap.getEquippedTitle());
             
@@ -110,7 +135,7 @@ public class TitleListScreen extends Screen {
         
         // Show tooltip for hovered title
         if (hoveredTitleIndex != -1 && cap != null) {
-            String title = ModTitles.TITLES[hoveredTitleIndex];
+            String title = sortedTitles[hoveredTitleIndex];
             boolean unlocked = cap.getUnlockedTitles().contains(title);
             String tooltip = unlocked ? "Left-click to equip" : "Locked";
             guiGraphics.renderTooltip(this.font, Component.literal(tooltip), mouseX, mouseY);

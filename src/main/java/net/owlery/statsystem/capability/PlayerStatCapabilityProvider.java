@@ -7,6 +7,7 @@ import net.minecraft.world.level.saveddata.SavedData;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.capabilities.CapabilityManager;
 import net.minecraftforge.common.capabilities.ICapabilityProvider;
+import net.minecraftforge.common.capabilities.ICapabilitySerializable;
 import net.minecraftforge.common.capabilities.RegisterCapabilitiesEvent;
 import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.event.AttachCapabilitiesEvent;
@@ -19,8 +20,11 @@ import net.owlery.statsystem.StatSystemMod;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraftforge.network.NetworkDirection;
+import net.minecraftforge.network.PacketDistributor;
+import net.minecraft.server.level.ServerPlayer;
 
-public class PlayerStatCapabilityProvider implements ICapabilityProvider {
+public class PlayerStatCapabilityProvider implements ICapabilityProvider, ICapabilitySerializable<CompoundTag> {
     public static Capability<PlayerStatCapability> PLAYER_STAT_CAPABILITY = null;
     private final PlayerStatCapability backend = new PlayerStatCapability();
     private final LazyOptional<PlayerStatCapability> optional = LazyOptional.of(() -> backend);
@@ -29,6 +33,20 @@ public class PlayerStatCapabilityProvider implements ICapabilityProvider {
     @Override
     public <T> LazyOptional<T> getCapability(@NotNull Capability<T> cap, @Nullable Direction side) {
         return cap == PLAYER_STAT_CAPABILITY ? optional.cast() : LazyOptional.empty();
+    }
+
+    @Override
+    public CompoundTag serializeNBT() {
+        System.out.println("[StatSystem] Serializing PlayerStatCapability!");
+        CompoundTag tag = new CompoundTag();
+        backend.saveNBTData(tag);
+        return tag;
+    }
+
+    @Override
+    public void deserializeNBT(CompoundTag nbt) {
+        System.out.println("[StatSystem] Deserializing PlayerStatCapability!");
+        backend.loadNBTData(nbt);
     }
 
     public static void register(RegisterCapabilitiesEvent event) {
@@ -56,10 +74,52 @@ public class PlayerStatCapabilityProvider implements ICapabilityProvider {
                 });
             });
         }
+
+        @SubscribeEvent
+        public static void onPlayerLoggedIn(PlayerEvent.PlayerLoggedInEvent event) {
+            Player player = event.getEntity();
+            player.getCapability(PLAYER_STAT_CAPABILITY).ifPresent(cap -> {
+                StatSystemMod.NETWORK.sendTo(
+                    new PlayerStatSyncPacket(
+                        cap.getUnlockedTitles(),
+                        cap.getUnlockedJobs(),
+                        cap.getEquippedTitle(),
+                        cap.getEquippedJob(),
+                        cap.getUsedPoints(),
+                        cap.getAvailablePoints()
+                    ),
+                    ((net.minecraft.server.level.ServerPlayer) player).connection.connection,
+                    NetworkDirection.PLAY_TO_CLIENT
+                );
+            });
+        }
+
+        @SubscribeEvent
+        public static void onPlayerRespawn(PlayerEvent.PlayerRespawnEvent event) {
+            Player player = event.getEntity();
+            player.getCapability(PLAYER_STAT_CAPABILITY).ifPresent(cap -> {
+                StatSystemMod.NETWORK.sendTo(
+                    new PlayerStatSyncPacket(
+                        cap.getUnlockedTitles(),
+                        cap.getUnlockedJobs(),
+                        cap.getEquippedTitle(),
+                        cap.getEquippedJob(),
+                        cap.getUsedPoints(),
+                        cap.getAvailablePoints()
+                    ),
+                    ((net.minecraft.server.level.ServerPlayer) player).connection.connection,
+                    NetworkDirection.PLAY_TO_CLIENT
+                );
+            });
+        }
     }
 
     public static LazyOptional<PlayerStatCapability> get(Player player) {
         return player.getCapability(PLAYER_STAT_CAPABILITY);
+    }
+
+    public static void markDirty(Player player) {
+        player.getPersistentData().putBoolean("statsystem_dirty", true);
     }
 
     public static ResourceLocation rl(String path) {

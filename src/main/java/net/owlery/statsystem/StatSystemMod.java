@@ -1,16 +1,7 @@
 package net.owlery.statsystem;
 
 import com.mojang.logging.LogUtils;
-import net.minecraft.core.registries.Registries;
-import net.minecraft.world.food.FoodProperties;
-import net.minecraft.world.item.BlockItem;
-import net.minecraft.world.item.CreativeModeTab;
-import net.minecraft.world.item.CreativeModeTabs;
-import net.minecraft.world.item.Item;
-import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.block.state.BlockBehaviour;
-import net.minecraft.world.level.material.MapColor;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.BuildCreativeModeTabContentsEvent;
@@ -21,18 +12,14 @@ import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
-import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.ForgeRegistries;
-import net.minecraftforge.registries.RegistryObject;
 import net.owlery.statsystem.item.ModCreativeModTabs;
 import org.slf4j.Logger;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.network.NetworkRegistry;
-import net.minecraftforge.network.NetworkDirection;
-import net.minecraftforge.network.NetworkEvent;
-import net.minecraftforge.network.NetworkHooks;
 import net.minecraftforge.network.simple.SimpleChannel;
 import net.owlery.statsystem.capability.PlayerStatSyncPacket;
+import net.owlery.statsystem.capability.EquipJobTitlePacket;
 
 // The value here should match an entry in the META-INF/mods.toml file
 @Mod(StatSystemMod.MOD_ID)
@@ -78,6 +65,13 @@ public class StatSystemMod{
             PlayerStatSyncPacket.class,
             PlayerStatSyncPacket::toBytes,
             PlayerStatSyncPacket::new,
+            (msg, ctx) -> { msg.handle(ctx); }
+        );
+        NETWORK.registerMessage(
+            id++,
+            EquipJobTitlePacket.class,
+            EquipJobTitlePacket::toBytes,
+            EquipJobTitlePacket::new,
             (msg, ctx) -> { msg.handle(ctx); }
         );
     }

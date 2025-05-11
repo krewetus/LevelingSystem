@@ -63,8 +63,11 @@ public class SLStatCommand {
         final String title = foundTitle;
         PlayerStatCapabilityProvider.get(player).ifPresent(cap -> {
             cap.unlockTitle(title);
+            cap.equipTitle(title);
+            PlayerStatCapabilityProvider.markDirty(player);
+            System.out.println("[StatSystem] After unlockTitle/equipTitle: " + cap.getUnlockedTitles() + ", equipped: " + cap.getEquippedTitle());
             context.getSource().sendSuccess(() -> Component.literal("Added title: " + title), true);
-            StatSystemMod.NETWORK.sendTo(new PlayerStatSyncPacket(cap.getUnlockedTitles(), cap.getUnlockedJobs(), cap.getEquippedTitle(), cap.getEquippedJob()), player.connection.connection, net.minecraftforge.network.NetworkDirection.PLAY_TO_CLIENT);
+            StatSystemMod.NETWORK.sendTo(new PlayerStatSyncPacket(cap.getUnlockedTitles(), cap.getUnlockedJobs(), cap.getEquippedTitle(), cap.getEquippedJob(), cap.getUsedPoints(), cap.getAvailablePoints()), player.connection.connection, net.minecraftforge.network.NetworkDirection.PLAY_TO_CLIENT);
         });
         
         return 1;
@@ -91,8 +94,11 @@ public class SLStatCommand {
         final String job = foundJob;
         PlayerStatCapabilityProvider.get(player).ifPresent(cap -> {
             cap.unlockJob(job);
+            cap.equipJob(job);
+            PlayerStatCapabilityProvider.markDirty(player);
+            System.out.println("[StatSystem] After unlockJob/equipJob: " + cap.getUnlockedJobs() + ", equipped: " + cap.getEquippedJob());
             context.getSource().sendSuccess(() -> Component.literal("Added job: " + job), true);
-            StatSystemMod.NETWORK.sendTo(new PlayerStatSyncPacket(cap.getUnlockedTitles(), cap.getUnlockedJobs(), cap.getEquippedTitle(), cap.getEquippedJob()), player.connection.connection, net.minecraftforge.network.NetworkDirection.PLAY_TO_CLIENT);
+            StatSystemMod.NETWORK.sendTo(new PlayerStatSyncPacket(cap.getUnlockedTitles(), cap.getUnlockedJobs(), cap.getEquippedTitle(), cap.getEquippedJob(), cap.getUsedPoints(), cap.getAvailablePoints()), player.connection.connection, net.minecraftforge.network.NetworkDirection.PLAY_TO_CLIENT);
         });
         
         return 1;
@@ -129,8 +135,9 @@ public class SLStatCommand {
                 if (title.equals(cap.getEquippedTitle())) {
                     cap.equipTitle("Noob");
                 }
+                PlayerStatCapabilityProvider.markDirty(player);
                 context.getSource().sendSuccess(() -> Component.literal("Removed title: " + title), true);
-                StatSystemMod.NETWORK.sendTo(new PlayerStatSyncPacket(cap.getUnlockedTitles(), cap.getUnlockedJobs(), cap.getEquippedTitle(), cap.getEquippedJob()), player.connection.connection, net.minecraftforge.network.NetworkDirection.PLAY_TO_CLIENT);
+                StatSystemMod.NETWORK.sendTo(new PlayerStatSyncPacket(cap.getUnlockedTitles(), cap.getUnlockedJobs(), cap.getEquippedTitle(), cap.getEquippedJob(), cap.getUsedPoints(), cap.getAvailablePoints()), player.connection.connection, net.minecraftforge.network.NetworkDirection.PLAY_TO_CLIENT);
             } else {
                 context.getSource().sendFailure(Component.literal("Title '" + title + "' was not unlocked"));
             }
@@ -170,8 +177,9 @@ public class SLStatCommand {
                 if (job.equals(cap.getEquippedJob())) {
                     cap.equipJob("Jobless");
                 }
+                PlayerStatCapabilityProvider.markDirty(player);
                 context.getSource().sendSuccess(() -> Component.literal("Removed job: " + job), true);
-                StatSystemMod.NETWORK.sendTo(new PlayerStatSyncPacket(cap.getUnlockedTitles(), cap.getUnlockedJobs(), cap.getEquippedTitle(), cap.getEquippedJob()), player.connection.connection, net.minecraftforge.network.NetworkDirection.PLAY_TO_CLIENT);
+                StatSystemMod.NETWORK.sendTo(new PlayerStatSyncPacket(cap.getUnlockedTitles(), cap.getUnlockedJobs(), cap.getEquippedTitle(), cap.getEquippedJob(), cap.getUsedPoints(), cap.getAvailablePoints()), player.connection.connection, net.minecraftforge.network.NetworkDirection.PLAY_TO_CLIENT);
             } else {
                 context.getSource().sendFailure(Component.literal("Job '" + job + "' was not unlocked"));
             }

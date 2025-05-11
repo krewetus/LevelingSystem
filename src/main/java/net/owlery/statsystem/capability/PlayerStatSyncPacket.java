@@ -15,12 +15,16 @@ public class PlayerStatSyncPacket {
     private final Set<String> unlockedJobs;
     private final String equippedTitle;
     private final String equippedJob;
+    private final int usedPoints;
+    private final int availablePoints;
 
-    public PlayerStatSyncPacket(Set<String> unlockedTitles, Set<String> unlockedJobs, String equippedTitle, String equippedJob) {
+    public PlayerStatSyncPacket(Set<String> unlockedTitles, Set<String> unlockedJobs, String equippedTitle, String equippedJob, int usedPoints, int availablePoints) {
         this.unlockedTitles = unlockedTitles;
         this.unlockedJobs = unlockedJobs;
         this.equippedTitle = equippedTitle;
         this.equippedJob = equippedJob;
+        this.usedPoints = usedPoints;
+        this.availablePoints = availablePoints;
     }
 
     public PlayerStatSyncPacket(FriendlyByteBuf buf) {
@@ -32,6 +36,8 @@ public class PlayerStatSyncPacket {
         for (int i = 0; i < jobCount; i++) this.unlockedJobs.add(buf.readUtf());
         this.equippedTitle = buf.readUtf();
         this.equippedJob = buf.readUtf();
+        this.usedPoints = buf.readVarInt();
+        this.availablePoints = buf.readVarInt();
     }
 
     public void toBytes(FriendlyByteBuf buf) {
@@ -41,6 +47,8 @@ public class PlayerStatSyncPacket {
         for (String j : unlockedJobs) buf.writeUtf(j);
         buf.writeUtf(equippedTitle);
         buf.writeUtf(equippedJob);
+        buf.writeVarInt(usedPoints);
+        buf.writeVarInt(availablePoints);
     }
 
     public void handle(Supplier<NetworkEvent.Context> ctx) {
@@ -54,6 +62,8 @@ public class PlayerStatSyncPacket {
                     cap.getUnlockedJobs().addAll(unlockedJobs);
                     cap.equipTitle(equippedTitle);
                     cap.equipJob(equippedJob);
+                    cap.setUsedPoints(usedPoints);
+                    cap.setAvailablePoints(availablePoints);
                 });
             }
         });
