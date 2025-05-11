@@ -16,6 +16,8 @@ out
 # gradle
 build
 .gradle
+.cursor
+.vscode
 
 # other
 eclipse
