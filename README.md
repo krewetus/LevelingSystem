@@ -21,3 +21,4 @@ More things, including README.md updates soon! xd
 - [ ] Animated menu
 - [ ] More jobs & titles
 - [ ] Jobs & titles give effects/buffs/debuffs
+- [ ] Config files to change XP cost and LVL cap
