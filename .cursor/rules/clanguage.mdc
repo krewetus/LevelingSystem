@@ -1,0 +1,6 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+If writing any C language code, always use endl;  instead of \n

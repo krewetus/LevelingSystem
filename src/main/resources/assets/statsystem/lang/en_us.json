@@ -1,3 +1,6 @@
 {
-  "creativetab.statsystem_tab": "Leveling System"
+  "creativetab.statsystem_tab": "Leveling System",
+  "key.statsystem.open_menu": "Open Stats Menu",
+  "key.categories.statsystem": "Stat System",
+  "screen.statsystem.stats_menu": "Stats Menu"
 }
