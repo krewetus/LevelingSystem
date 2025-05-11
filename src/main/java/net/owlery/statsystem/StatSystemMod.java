@@ -26,12 +26,26 @@ import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.RegistryObject;
 import net.owlery.statsystem.item.ModCreativeModTabs;
 import org.slf4j.Logger;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraftforge.network.NetworkRegistry;
+import net.minecraftforge.network.NetworkDirection;
+import net.minecraftforge.network.NetworkEvent;
+import net.minecraftforge.network.NetworkHooks;
+import net.minecraftforge.network.simple.SimpleChannel;
+import net.owlery.statsystem.capability.PlayerStatSyncPacket;
 
 // The value here should match an entry in the META-INF/mods.toml file
 @Mod(StatSystemMod.MOD_ID)
 public class StatSystemMod{
     public static final String MOD_ID = "statsystem";
     private static final Logger LOGGER = LogUtils.getLogger();
+    private static final String PROTOCOL_VERSION = "1";
+    public static final SimpleChannel NETWORK = NetworkRegistry.newSimpleChannel(
+            new ResourceLocation(MOD_ID, "main"),
+            () -> PROTOCOL_VERSION,
+            PROTOCOL_VERSION::equals,
+            PROTOCOL_VERSION::equals
+    );
 
     public StatSystemMod(FMLJavaModLoadingContext context)
     {
@@ -47,12 +61,25 @@ public class StatSystemMod{
 
         // Register the item to a creative tab
         modEventBus.addListener(this::addCreative);
+
+        context.getModEventBus().addListener(this::setup);
     }
 
     private void commonSetup(final FMLCommonSetupEvent event)
     {
         LOGGER.info("HELLO FROM THE SETUP");
         LOGGER.info("NOT DIRT BLOCK >> {}", ForgeRegistries.BLOCKS.getKey(Blocks.SPRUCE_LOG));
+    }
+
+    private void setup(final FMLCommonSetupEvent event) {
+        int id = 0;
+        NETWORK.registerMessage(
+            id++,
+            PlayerStatSyncPacket.class,
+            PlayerStatSyncPacket::toBytes,
+            PlayerStatSyncPacket::new,
+            (msg, ctx) -> { msg.handle(ctx); }
+        );
     }
 
     // Add the example block item to the building blocks tab

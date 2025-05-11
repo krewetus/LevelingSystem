@@ -2,11 +2,13 @@ package net.owlery.statsystem;
 
 public class ModTitles {
     public static final String[] TITLES = {
-        "Dragon Slayer",
+        "Bum",
         "Noob",
+        "Dragon Slayer",
         "Adventurer",
-        "Stupid Faggot",
         "Maidenless",
-        "Pussy Conqueror"
+        // i promise my friends made me write this one xD
+        "Pussy Conqueror",
+        "Marathon Runner"
     };
 } 

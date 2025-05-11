@@ -109,7 +109,7 @@ public class StatsMenuScreen extends Screen {
         if (animationProgress > 0.5f) {
             float textAlpha = Mth.clamp((animationProgress - 0.5f) * 2.0f, 0.0f, 1.0f);
             int alpha = (int) (textAlpha * 255);
-            int statusY = y + 33;
+            int statusY = y + 34;
             int usernameY = y + 75;
             int titleY = usernameY + 20;
             int jobY = titleY + 20;
@@ -123,10 +123,37 @@ public class StatsMenuScreen extends Screen {
             guiGraphics.pose().translate(-textWidth / 2, -this.font.lineHeight / 2, 0);
             guiGraphics.drawString(this.font, statusText, 0, 0, 0xFFFFFF | (alpha << 24));
             guiGraphics.pose().popPose();
-            // Username
+            // Username (left)
             String usernameLabel = "USERNAME: ";
             String usernameValue = this.minecraft.getUser().getName();
-            guiGraphics.drawString(this.font, Component.literal(usernameLabel + usernameValue).plainCopy().withStyle(s -> s.withColor(0xFFFFFF)), x + 20, usernameY, 0xFFFFFF | (alpha << 24));
+            int usernameX = x + 20;
+            guiGraphics.drawString(this.font, Component.literal(usernameLabel + usernameValue).plainCopy().withStyle(s -> s.withColor(0xFFFFFF)), usernameX, usernameY, 0xFFFFFF | (alpha << 24));
+            // Level (right, big number)
+            Player player = this.minecraft.player;
+            if (player != null) {
+                String levelLabel = "LEVEL: ";
+                String levelValue = String.valueOf(player.experienceLevel);
+                int levelLabelX = x + currentWidth - 20 - this.font.width(levelLabel) - this.font.width(levelValue) - 8;
+                int levelLabelY = usernameY;
+                int levelValueX = levelLabelX + this.font.width(levelLabel) + 4;
+                // Draw label
+                guiGraphics.drawString(this.font, Component.literal(levelLabel), levelLabelX, levelLabelY, 0xFFFFFF | (alpha << 24));
+                // Draw big level number
+                guiGraphics.pose().pushPose();
+                guiGraphics.pose().translate(levelValueX, levelLabelY - 2, 0);
+                guiGraphics.pose().scale(1.5f, 1.5f, 1.0f);
+                guiGraphics.drawString(this.font, Component.literal(levelValue), 0, 0, 0xFFFFFF | (alpha << 24));
+                guiGraphics.pose().popPose();
+                // XP (below level, right-aligned, lime green)
+                int xpTotal = player.totalExperience;
+                String xpLabel = "XP: ";
+                String xpValue = String.valueOf(xpTotal);
+                int xpLabelY = usernameY + 16;
+                int xpValueX = x + currentWidth - 20 - this.font.width(xpValue);
+                int xpLabelX = xpValueX - this.font.width(xpLabel) - 2;
+                guiGraphics.drawString(this.font, Component.literal(xpLabel), xpLabelX, xpLabelY, 0xFFFFFF | (alpha << 24));
+                guiGraphics.drawString(this.font, Component.literal(xpValue), xpValueX, xpLabelY, 0x32CD32 | (alpha << 24));
+            }
             // Title label and value
             String titleLabel = "TITLE: ";
             String titleName = ModTitles.TITLES[DEFAULT_TITLE_INDEX];
@@ -157,7 +184,6 @@ public class StatsMenuScreen extends Screen {
             jobLabelY1 = jobLabelY;
             jobLabelY2 = jobLabelY + this.font.lineHeight;
             // HP line
-            Player player = this.minecraft.player;
             if (player != null) {
                 int hpLabelX = x + 20;
                 int hpLabelY = hpY;
@@ -167,19 +193,48 @@ public class StatsMenuScreen extends Screen {
                 String hpCurrent = String.valueOf((int) currentHp);
                 String hpMax = String.valueOf((int) maxHp);
                 int hpColor = 0x00FF00; // green
+                float hpPercent = currentHp / maxHp;
                 // Draw label
                 guiGraphics.drawString(this.font, Component.literal(hpLabel), hpLabelX, hpLabelY, 0xFFFFFF | (alpha << 24));
                 // Draw current HP (red if <30%)
+                int hpCounterColor;
+                if (hpPercent > 0.6f) hpCounterColor = 0x00FF00; // green
+                else if (hpPercent > 0.3f) hpCounterColor = 0xFFFF00; // yellow
+                else hpCounterColor = 0xFF5555; // red
                 guiGraphics.drawString(
                     this.font,
                     Component.literal(hpCurrent),
                     hpLabelX + this.font.width(hpLabel),
                     hpLabelY,
-                    ((currentHp / maxHp) < 0.3f ? 0xFF5555 : hpColor) | (alpha << 24)
+                    hpCounterColor | (alpha << 24)
                 );
                 // Draw slash and max HP (always green)
                 String slashMax = " / " + hpMax;
                 guiGraphics.drawString(this.font, Component.literal(slashMax), hpLabelX + this.font.width(hpLabel) + this.font.width(hpCurrent), hpLabelY, hpColor | (alpha << 24));
+
+                // Draw HP bar below HP text
+                int barWidth = currentWidth - 40;
+                int barHeight = 8;
+                int barX = x + 20;
+                int barY = hpLabelY + 14;
+                int fillWidth = (int) (barWidth * Mth.clamp(hpPercent, 0.0f, 1.0f));
+                int barColor;
+                if (hpPercent > 0.6f) barColor = 0x00FF00; // green
+                else if (hpPercent > 0.3f) barColor = 0xFFFF00; // yellow
+                else barColor = 0xFF5555; // red
+                int emptyColor = 0xFFCCCCCC; // light gray as in the reference image
+                // Draw shadow (slightly larger, semi-transparent gray)
+                guiGraphics.fill(barX - 2, barY - 2, barX + barWidth + 2, barY + barHeight + 2, 0x66000000);
+                // Draw empty bar (light gray)
+                guiGraphics.fill(barX, barY, barX + barWidth, barY + barHeight, emptyColor);
+                // Draw filled bar
+                guiGraphics.fill(barX, barY, barX + fillWidth, barY + barHeight, 0xFF000000 | barColor);
+                // Draw big white line below the bar
+                int lineMargin = 16;
+                int lineWidth = barWidth - lineMargin;
+                int lineX = barX + lineMargin / 2;
+                int lineY = barY + barHeight + 8;
+                guiGraphics.fill(lineX, lineY, lineX + lineWidth, lineY + 3, 0xFFFFFFFF);
             }
             // Tooltip logic for job
             if (isInJobLabel(mouseX, mouseY)) {
