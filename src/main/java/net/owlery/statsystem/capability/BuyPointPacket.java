@@ -3,6 +3,7 @@ package net.owlery.statsystem.capability;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.network.NetworkEvent;
+import net.owlery.statsystem.config.StatSystemConfig;
 import java.util.function.Supplier;
 
 public class BuyPointPacket {
@@ -16,7 +17,7 @@ public class BuyPointPacket {
             if (player != null) {
                 PlayerStatCapabilityProvider.get(player).ifPresent(cap -> {
                     int bought = cap.getPointsPurchased();
-                    int cost = 100 + 50 * bought;
+                    int cost = StatSystemConfig.BASE_XP_COST.get() + StatSystemConfig.XP_INCREMENT.get() * bought;
                     if (player.totalExperience < cost) return;
                     player.giveExperiencePoints(-cost);
                     cap.setPointsPurchased(bought + 1);

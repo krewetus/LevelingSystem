@@ -18,6 +18,8 @@ import net.owlery.statsystem.capability.UpgradeStatPacket;
 import net.owlery.statsystem.capability.BuyPointPacket;
 import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.renderer.GameRenderer;
+import net.owlery.statsystem.config.StatSystemConfig;
+import com.mojang.math.Axis;
 
 public class StatsMenuScreen extends Screen {
     private static final ResourceLocation TEXTURE = new ResourceLocation(StatSystemMod.MOD_ID, "textures/gui/stats_menu.png");
@@ -96,6 +98,8 @@ public class StatsMenuScreen extends Screen {
         if (job.equalsIgnoreCase("None")) return 0xAAAAAA; // gray
         if (job.equalsIgnoreCase("Trader")) return 0x80EF80; // lightgreen
         if (job.equalsIgnoreCase("Hunter")) return 0xFFD700; // dark yellow
+        if (job.equalsIgnoreCase("Miner")) return 0xBCC6CC; // silver-ish i think?
+        if (job.equalsIgnoreCase("Magician")) return 0x7F00FF; // violet
         return null;
     }
 
@@ -121,8 +125,7 @@ public class StatsMenuScreen extends Screen {
         }
         if (button == 0) {
             int buyButtonX = x + currentWidth - 28 - 20;
-            int buyButtonY = y + currentHeight - 28 - 20;
-            
+            int buyButtonY = y + currentHeight - 70; // match new row Y position
             // Buy point button
             if (mouseX >= buyButtonX && mouseX < buyButtonX + 28 &&
                 mouseY >= buyButtonY && mouseY < buyButtonY + 28) {
@@ -130,27 +133,27 @@ public class StatsMenuScreen extends Screen {
                 return true;
             }
             
-            // Stat upgrade buttons (only visible button area, no invisible hitbox)
+            // Stat upgrade buttons (only visible button area)
             if (mouseX >= healthPlusX1 && mouseX < healthPlusX2 && mouseY >= healthPlusY1 && mouseY < healthPlusY2) {
-                if (capability != null && capability.getAvailablePoints() > 0 && capability.getHealthStat() < 100) {
+                if (capability != null && capability.getAvailablePoints() > 0 && capability.getHealthStat() < StatSystemConfig.LEVEL_CAP.get()) {
                     StatSystemMod.NETWORK.sendToServer(new UpgradeStatPacket("health"));
                     return true;
                 }
             }
             if (mouseX >= strengthPlusX1 && mouseX < strengthPlusX2 && mouseY >= strengthPlusY1 && mouseY < strengthPlusY2) {
-                if (capability != null && capability.getAvailablePoints() > 0 && capability.getStrengthStat() < 100) {
+                if (capability != null && capability.getAvailablePoints() > 0 && capability.getStrengthStat() < StatSystemConfig.LEVEL_CAP.get()) {
                     StatSystemMod.NETWORK.sendToServer(new UpgradeStatPacket("strength"));
                     return true;
                 }
             }
             if (mouseX >= agilityPlusX1 && mouseX < agilityPlusX2 && mouseY >= agilityPlusY1 && mouseY < agilityPlusY2) {
-                if (capability != null && capability.getAvailablePoints() > 0 && capability.getAgilityStat() < 100) {
+                if (capability != null && capability.getAvailablePoints() > 0 && capability.getAgilityStat() < StatSystemConfig.LEVEL_CAP.get()) {
                     StatSystemMod.NETWORK.sendToServer(new UpgradeStatPacket("agility"));
                     return true;
                 }
             }
             if (mouseX >= charismaPlusX1 && mouseX < charismaPlusX2 && mouseY >= charismaPlusY1 && mouseY < charismaPlusY2) {
-                if (capability != null && capability.getAvailablePoints() > 0 && capability.getCharismaStat() < 100) {
+                if (capability != null && capability.getAvailablePoints() > 0 && capability.getCharismaStat() < StatSystemConfig.LEVEL_CAP.get()) {
                     StatSystemMod.NETWORK.sendToServer(new UpgradeStatPacket("charisma"));
                     return true;
                 }
@@ -311,8 +314,10 @@ public class StatsMenuScreen extends Screen {
                 // Draw label
                 guiGraphics.drawString(this.font, Component.literal(hpLabel), hpLabelX, hpLabelY, 0xFFFFFF | (alpha << 24));
                 // Draw current HP (red if <30%)
+                boolean isFullHp = currentHp == maxHp;
                 int hpCounterColor;
-                if (hpPercent > 0.6f) hpCounterColor = 0x00FF00; // green
+                if (isFullHp) hpCounterColor = 0xFFFFFF; // white if full
+                else if (hpPercent > 0.6f) hpCounterColor = 0x00FF00; // green
                 else if (hpPercent > 0.3f) hpCounterColor = 0xFFFF00; // yellow
                 else hpCounterColor = 0xFF5555; // red
                 int baseHpWidth = this.font.width(String.valueOf((int) currentHp));
@@ -332,20 +337,21 @@ public class StatsMenuScreen extends Screen {
                         0xFFFF55 | (alpha << 24) // yellow
                     );
                 }
-                // Draw slash and max HP (always green)
+                // Draw slash and max HP (always green, but white if full)
                 String slashMax = " / " + hpMax;
                 int hpCurrentWidth = this.font.width(String.valueOf((int) currentHp)) + (absorptionHp > 0 ? this.font.width("+" + (int)absorptionHp) : 0);
-                guiGraphics.drawString(this.font, Component.literal(slashMax), hpLabelX + this.font.width(hpLabel) + hpCurrentWidth, hpLabelY, hpColor | (alpha << 24));
+                int slashMaxColor = isFullHp ? 0xFFFFFF : 0x00FF00;
+                guiGraphics.drawString(this.font, Component.literal(slashMax), hpLabelX + this.font.width(hpLabel) + hpCurrentWidth, hpLabelY, slashMaxColor | (alpha << 24));
 
                 // Draw HP bar below HP text
-                int barWidth = currentWidth - 40;
-                int barHeight = 8;
+                int barWidth = currentWidth - 36; // 2 pixels wider (was -38)
+                int barHeight = 4; // 2 pixels shorter (was 6)
                 int barX = x + 20;
-                int barY = hpLabelY + 14;
+                int barY = hpLabelY + 15; // Centered by moving down 1 pixel
                 int fillWidth = (int) (barWidth * Mth.clamp(hpPercent, 0.0f, 1.0f));
                 int absorptionFillWidth = (int) (barWidth * Mth.clamp((currentHp + absorptionHp) / maxHp, 0.0f, 1.0f));
                 int barColor;
-                if (hpPercent > 0.6f) barColor = 0x00FF00; // green
+                if (hpPercent > 0.6f) barColor = 0xFFFFFFFF; // white
                 else if (hpPercent > 0.3f) barColor = 0xFFFF00; // yellow
                 else barColor = 0xFF5555; // red
                 int emptyColor = 0xFFCCCCCC; // light gray as in the reference image
@@ -360,12 +366,23 @@ public class StatsMenuScreen extends Screen {
                     int absorptionColor = 0xFFFF55; // bright yellow
                     guiGraphics.fill(barX + fillWidth, barY, barX + absorptionFillWidth, barY + barHeight, absorptionColor);
                 }
-                // Draw big white line below the bar
+                // Draw big white line and diamond further down
                 int lineMargin = 16;
-                int lineWidth = barWidth - lineMargin;
-                int lineX = barX + lineMargin / 2;
-                int lineY = barY + barHeight + 8;
-                guiGraphics.fill(lineX, lineY, lineX + lineWidth, lineY + 3, 0xFFFFFFFF);
+                int lineWidth = barWidth - lineMargin + 24; // Slightly longer than health bar
+                int lineX = barX + lineMargin / 2 - 12; // Center the longer bar
+                int lineY = barY + barHeight + 38; // Move the decorative bar even lower
+                int lineHeight = 2; // Thinner bar
+                guiGraphics.fill(lineX, lineY, lineX + lineWidth, lineY + lineHeight, 0xFFFFFFFF);
+
+                // Draw diamond above the decorative bar, aligned to the right end
+                int diamondSize = 7; // Slightly smaller diamond
+                int diamondCenterX = lineX + lineWidth - 5; // Right end of the bar
+                int diamondCenterY = lineY - diamondSize; // Place above the bar with a small gap
+                guiGraphics.pose().pushPose();
+                guiGraphics.pose().translate(diamondCenterX, diamondCenterY, 0);
+                guiGraphics.pose().mulPose(Axis.ZP.rotationDegrees(45));
+                guiGraphics.fill(-diamondSize / 2, -diamondSize / 2, diamondSize / 2, diamondSize / 2, 0xFFFFFFFF);
+                guiGraphics.pose().popPose();
             }
             // Tooltip logic for job
             if (isInJobValue(mouseX, mouseY)) {
@@ -389,39 +406,36 @@ public class StatsMenuScreen extends Screen {
             if (showTitleTooltip) {
                 guiGraphics.renderTooltip(this.font, Component.literal("Click me to see all possible titles"), mouseX, mouseY + 12);
             }
-            // Draw buy-point button in bottom right corner
+            // Set a new Y position for the row (move up a bit)
+            int rowY = y + currentHeight - 70;
+            // Draw points text: Used points and Points available, left-aligned
+            int usedPointsX = x + 20;
+            int availablePointsX = x + 20;
+            if (cap != null) {
+                String usedPointsLabel = "Used points: " + cap.getUsedPoints();
+                String availablePointsLabel = "Points available: " + cap.getAvailablePoints();
+                guiGraphics.drawString(this.font, Component.literal(usedPointsLabel), usedPointsX, rowY, 0x888888 | (alpha << 24));
+                guiGraphics.drawString(this.font, Component.literal(availablePointsLabel), availablePointsX, rowY + 16, 0xFFFFFF | (alpha << 24));
+            }
+            // Draw next cost text and button, right-aligned, on the same Y
             int buyButtonSize = 28;
-            int buyButtonX = x + currentWidth - buyButtonSize - 20; // Move to right side
-            int buyButtonY = y + currentHeight - buyButtonSize - 30; // Move up by 10 pixels
+            int buyButtonX = x + currentWidth - buyButtonSize - 20;
+            int buyButtonY = rowY;
             buyPointX1 = buyButtonX;
             buyPointX2 = buyButtonX + buyButtonSize;
             buyPointY1 = buyButtonY;
             buyPointY2 = buyButtonY + buyButtonSize;
-            int xpCost = 100 + 50 * (cap != null ? cap.getPointsPurchased() : 0);
+            int xpCost = StatSystemConfig.BASE_XP_COST.get() + StatSystemConfig.XP_INCREMENT.get() * (cap != null ? cap.getPointsPurchased() : 0);
             boolean canBuy = canAffordXP(xpCost);
             drawBigPlusButton(guiGraphics, buyButtonX, buyButtonY, buyButtonSize, canBuy, mouseX, mouseY);
-            // Draw XP cost above the button, now split into two lines
             String nextCostLabel = "Next cost:";
             String nextCostValue = "-" + xpCost + " XP";
-            int nextCostLabelX = x + currentWidth - this.font.width(nextCostLabel) - 20; // right align label
-            int nextCostY = buyButtonY - 28; // move label up a bit for two lines
-            guiGraphics.drawString(this.font, Component.literal(nextCostLabel), nextCostLabelX, nextCostY, 0xFFFFFF);
-            int nextCostValueX = x + currentWidth - this.font.width(nextCostValue) - 20; // right align value
-            int nextCostValueY = nextCostY + 12;
-            guiGraphics.drawString(this.font, Component.literal(nextCostValue), nextCostValueX, nextCostValueY, canBuy ? 0x00FF00 : 0x888888);
-            // Draw points text: Used points above Points available, both left-aligned
-            int usedPointsX = x + 20;
-            int usedPointsY = nextCostY;
-            int availablePointsX = x + 20;
-            int availablePointsY = usedPointsY + 16;
-            if (cap != null) {
-                String usedPointsLabel = "Used points: " + cap.getUsedPoints();
-                String availablePointsLabel = "Points available: " + cap.getAvailablePoints();
-                guiGraphics.drawString(this.font, Component.literal(usedPointsLabel), usedPointsX, usedPointsY, 0x888888 | (alpha << 24));
-                guiGraphics.drawString(this.font, Component.literal(availablePointsLabel), availablePointsX, availablePointsY, 0xFFFFFF | (alpha << 24));
-            }
+            int nextCostLabelX = buyButtonX - 10 - this.font.width(nextCostLabel); // 10px gap from button
+            int nextCostValueX = buyButtonX - 10 - this.font.width(nextCostValue); // 10px gap from button
+            guiGraphics.drawString(this.font, Component.literal(nextCostLabel), nextCostLabelX, rowY, 0xFFFFFF);
+            guiGraphics.drawString(this.font, Component.literal(nextCostValue), nextCostValueX, rowY + 16, canBuy ? 0x00FF00 : 0x888888);
             // Draw stats below the buy-point button and above the points fields
-            int statsY = y + currentHeight - 170; // Move stats up by 50 pixels
+            int statsY = y + currentHeight - 150; // Move stats lower by 20 pixels
             int statLabelX = x + 4; // Move stats section 20px more to the left
             int statValueX = statLabelX + 70; // Move value closer to label
             int statColSpacing = 128; // Move right column further right

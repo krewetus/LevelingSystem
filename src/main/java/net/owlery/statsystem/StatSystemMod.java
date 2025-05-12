@@ -14,6 +14,7 @@ import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.owlery.statsystem.item.ModCreativeModTabs;
+import net.owlery.statsystem.config.StatSystemConfig;
 import org.slf4j.Logger;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.network.NetworkRegistry;
@@ -46,6 +47,9 @@ public class StatSystemMod{
     public StatSystemMod(FMLJavaModLoadingContext context)
     {
         IEventBus modEventBus = context.getModEventBus();
+
+        // Register configuration
+        StatSystemConfig.register();
 
         ModCreativeModTabs.register(modEventBus);
 

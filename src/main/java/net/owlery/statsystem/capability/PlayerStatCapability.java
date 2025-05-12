@@ -4,6 +4,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.StringTag;
 import net.minecraft.world.entity.player.Player;
+import net.owlery.statsystem.config.StatSystemConfig;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -52,11 +53,11 @@ public class PlayerStatCapability {
     public void setAvailablePoints(int points) {
         this.availablePoints = Math.max(0, points); // Prevent negative points
     }
-    public void setHealthStat(int value) { healthStat = Math.max(0, Math.min(100, value)); }
-    public void setStrengthStat(int value) { strengthStat = Math.max(0, Math.min(100, value)); }
-    public void setAgilityStat(int value) { agilityStat = Math.max(0, Math.min(100, value)); }
+    public void setHealthStat(int value) { healthStat = Math.max(0, Math.min(StatSystemConfig.LEVEL_CAP.get(), value)); }
+    public void setStrengthStat(int value) { strengthStat = Math.max(0, Math.min(StatSystemConfig.LEVEL_CAP.get(), value)); }
+    public void setAgilityStat(int value) { agilityStat = Math.max(0, Math.min(StatSystemConfig.LEVEL_CAP.get(), value)); }
     public void setPointsPurchased(int value) { pointsPurchased = value; }
-    public void setCharismaStat(int value) { charismaStat = Math.max(0, Math.min(100, value)); }
+    public void setCharismaStat(int value) { charismaStat = Math.max(0, Math.min(StatSystemConfig.LEVEL_CAP.get(), value)); }
 
     public void usePoint() {
         if (this.availablePoints > 0) {

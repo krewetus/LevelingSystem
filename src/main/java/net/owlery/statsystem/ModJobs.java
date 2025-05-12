@@ -8,6 +8,8 @@ public class ModJobs {
         "Bitchass",
         "Entertainer",
         "Farmer",
-        "Homeless"
+        "Homeless",
+        "Miner",
+        "Magician"
     };
 } 

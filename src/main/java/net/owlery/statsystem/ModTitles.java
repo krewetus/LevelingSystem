@@ -9,6 +9,8 @@ public class ModTitles {
         "Maidenless",
         // i promise my friends made me write this one xD
         "Pussy Conqueror",
-        "Marathon Runner"
+        "Marathon Runner",
+        "Doctor",
+        "Trickster"
     };
 } 
