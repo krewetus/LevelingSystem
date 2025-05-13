@@ -16,9 +16,10 @@ Btw, you can't download this yet. Why? i dunno, cuz i say so :P
 
 More things, including README.md updates soon! xd
 
-- [ ] Charisma working
+
 - [ ] StatPointUp item
 - [ ] Animated menu
 - [ ] More jobs & titles
 - [ ] Jobs & titles give effects/buffs/debuffs
 - [x] Config files to change XP cost and LVL cap
+- [ ] ~~Charisma working~~ Changed to Intelligence
